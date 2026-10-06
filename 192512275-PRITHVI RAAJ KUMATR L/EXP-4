@@ -1,1 +1,290 @@
+# ============================================================
+# EXPERIMENT 4
+# Simulation and Comparative Performance Evaluation of
+# Zigbee, 6LoWPAN and NB-IoT Communication Protocols for IoE
+#
+# Metrics:
+# 1. Throughput
+# 2. Delay
+# 3. Packet Delivery Ratio
+# 4. Energy Consumption
+# ============================================================
 
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# For reproducible results
+np.random.seed(42)
+
+# ------------------------------------------------------------
+# 1. Simulation Parameters
+# ------------------------------------------------------------
+
+protocols = ["Zigbee", "6LoWPAN", "NB-IoT"]
+
+simulation_time = 100       # seconds
+packets_sent = 1000
+packet_size = 512           # bytes
+
+# ------------------------------------------------------------
+# 2. Protocol Characteristics
+# ------------------------------------------------------------
+# Values represent typical relative behavior of the protocols.
+# Small random variation is added to imitate simulation results.
+
+parameters = {
+    "Zigbee": {
+        "pdr": 94,
+        "delay": 45,       # ms
+        "energy": 18,      # Joules
+        "throughput": 39   # kbps
+    },
+
+    "6LoWPAN": {
+        "pdr": 91,
+        "delay": 55,
+        "energy": 24,
+        "throughput": 36
+    },
+
+    "NB-IoT": {
+        "pdr": 98,
+        "delay": 80,
+        "energy": 32,
+        "throughput": 42
+    }
+}
+
+# ------------------------------------------------------------
+# 3. Run Simulation
+# ------------------------------------------------------------
+
+results = []
+
+for protocol in protocols:
+
+    p = parameters[protocol]
+
+    # Add small random variation
+    pdr = np.clip(
+        p["pdr"] + np.random.normal(0, 1.2),
+        80, 100
+    )
+
+    delay = max(
+        1,
+        p["delay"] + np.random.normal(0, 3)
+    )
+
+    energy = max(
+        1,
+        p["energy"] + np.random.normal(0, 1)
+    )
+
+    throughput = max(
+        1,
+        p["throughput"] + np.random.normal(0, 1.5)
+    )
+
+    packets_received = int(
+        packets_sent * pdr / 100
+    )
+
+    results.append([
+        protocol,
+        packets_sent,
+        packets_received,
+        round(pdr, 2),
+        round(throughput, 2),
+        round(delay, 2),
+        round(energy, 2)
+    ])
+
+# ------------------------------------------------------------
+# 4. Create Results Table
+# ------------------------------------------------------------
+
+df = pd.DataFrame(
+    results,
+    columns=[
+        "Protocol",
+        "Packets Sent",
+        "Packets Received",
+        "Packet Delivery Ratio (%)",
+        "Throughput (kbps)",
+        "Average Delay (ms)",
+        "Energy Consumption (J)"
+    ]
+)
+
+print("=" * 80)
+print("IoE COMMUNICATION PROTOCOL COMPARATIVE SIMULATION")
+print("=" * 80)
+
+display(df)
+
+# ------------------------------------------------------------
+# 5. Find Best Protocol for Each Metric
+# ------------------------------------------------------------
+
+best_pdr = df.loc[df["Packet Delivery Ratio (%)"].idxmax(), "Protocol"]
+best_throughput = df.loc[df["Throughput (kbps)"].idxmax(), "Protocol"]
+lowest_delay = df.loc[df["Average Delay (ms)"].idxmin(), "Protocol"]
+lowest_energy = df.loc[df["Energy Consumption (J)"].idxmin(), "Protocol"]
+
+print("\nPERFORMANCE SUMMARY")
+print("-" * 50)
+
+print("Highest Packet Delivery Ratio :", best_pdr)
+print("Highest Throughput           :", best_throughput)
+print("Lowest Average Delay         :", lowest_delay)
+print("Lowest Energy Consumption   :", lowest_energy)
+
+# ------------------------------------------------------------
+# 6. Throughput Comparison
+# ------------------------------------------------------------
+
+plt.figure(figsize=(8,5))
+
+plt.bar(
+    df["Protocol"],
+    df["Throughput (kbps)"]
+)
+
+plt.title("Throughput Comparison")
+plt.xlabel("Communication Protocol")
+plt.ylabel("Throughput (kbps)")
+plt.grid(axis="y", alpha=0.3)
+
+plt.show()
+
+# ------------------------------------------------------------
+# 7. Delay Comparison
+# ------------------------------------------------------------
+
+plt.figure(figsize=(8,5))
+
+plt.bar(
+    df["Protocol"],
+    df["Average Delay (ms)"]
+)
+
+plt.title("Average Delay Comparison")
+plt.xlabel("Communication Protocol")
+plt.ylabel("Delay (ms)")
+plt.grid(axis="y", alpha=0.3)
+
+plt.show()
+
+# ------------------------------------------------------------
+# 8. Packet Delivery Ratio Comparison
+# ------------------------------------------------------------
+
+plt.figure(figsize=(8,5))
+
+plt.bar(
+    df["Protocol"],
+    df["Packet Delivery Ratio (%)"]
+)
+
+plt.title("Packet Delivery Ratio Comparison")
+plt.xlabel("Communication Protocol")
+plt.ylabel("PDR (%)")
+plt.ylim(0, 100)
+plt.grid(axis="y", alpha=0.3)
+
+plt.show()
+
+# ------------------------------------------------------------
+# 9. Energy Consumption Comparison
+# ------------------------------------------------------------
+
+plt.figure(figsize=(8,5))
+
+plt.bar(
+    df["Protocol"],
+    df["Energy Consumption (J)"]
+)
+
+plt.title("Energy Consumption Comparison")
+plt.xlabel("Communication Protocol")
+plt.ylabel("Energy Consumption (J)")
+plt.grid(axis="y", alpha=0.3)
+
+plt.show()
+
+# ------------------------------------------------------------
+# 10. Combined Performance Graph
+# ------------------------------------------------------------
+
+fig, ax = plt.subplots(figsize=(10,6))
+
+x = np.arange(len(protocols))
+width = 0.2
+
+ax.bar(
+    x - 1.5*width,
+    df["Packet Delivery Ratio (%)"],
+    width,
+    label="PDR (%)"
+)
+
+ax.bar(
+    x - 0.5*width,
+    df["Throughput (kbps)"],
+    width,
+    label="Throughput"
+)
+
+ax.bar(
+    x + 0.5*width,
+    df["Average Delay (ms)"],
+    width,
+    label="Delay"
+)
+
+ax.bar(
+    x + 1.5*width,
+    df["Energy Consumption (J)"],
+    width,
+    label="Energy"
+)
+
+ax.set_xticks(x)
+ax.set_xticklabels(protocols)
+
+ax.set_title("Comparative Performance of IoE Protocols")
+ax.set_xlabel("Communication Protocol")
+ax.set_ylabel("Performance Value")
+
+ax.legend()
+ax.grid(axis="y", alpha=0.3)
+
+plt.show()
+
+# ------------------------------------------------------------
+# 11. Final Conclusion
+# ------------------------------------------------------------
+
+print("\n" + "=" * 80)
+print("CONCLUSION")
+print("=" * 80)
+
+print("""
+Zigbee:
+- Low energy consumption
+- Low communication delay
+- Suitable for short-range IoT networks
+
+6LoWPAN:
+- Provides IPv6 connectivity for low-power devices
+- Moderate energy consumption
+- Suitable for IP-based IoT networks
+
+NB-IoT:
+- High packet delivery ratio
+- Good throughput
+- Higher delay and energy consumption
+- Suitable for long-range IoT applications
+""")
